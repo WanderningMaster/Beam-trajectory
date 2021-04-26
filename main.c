@@ -1,4 +1,8 @@
 #include <gtk/gtk.h>
+#include <stdlib.h>
+#include <math.h>
+#include "Trajectory.h"
+
 
 GtkWidget *window, /*main window*/
       *count, *c, *c1, *begin_x, *begin_y, *end_x, *end_y, //entries
@@ -110,7 +114,7 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
 
 
     /*drawing area configuration*/
-    gtk_widget_set_size_request (drawing_area, 800, 800);
+    gtk_widget_set_size_request (drawing_area, 1000, 1000);
 
 
     //background color
@@ -137,11 +141,55 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
 
 void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
 
-    cairo_set_source_rgb (cr, 255.0, 0.0, 0.0);
+    double _begin_x = atof((char*)gtk_entry_get_text(GTK_ENTRY(begin_x)));  
+    double _begin_y = atof((char*)gtk_entry_get_text(GTK_ENTRY(begin_y)));
+    double _end_x = atof((char*)gtk_entry_get_text(GTK_ENTRY(end_x)));  
+    double _end_y = atof((char*)gtk_entry_get_text(GTK_ENTRY(end_y)));
+    double _c = atof((char*)gtk_entry_get_text(GTK_ENTRY(c)));
+    double _c1 = atof((char*)gtk_entry_get_text(GTK_ENTRY(c1)));
+    int _count = atoi((char*)gtk_entry_get_text(GTK_ENTRY(count)));
+
+    struct Point begin;
+    begin.x = _begin_x;
+    begin.y = _begin_y;
+
+    struct Point end;
+    end.x = _end_x;
+    end.y = _end_y;
+
+
+    struct Point *drops;
+    drops = (struct Point*)malloc(sizeof(struct Point)*(_count-1));
+    
+    get_drop_points(begin, end, drops, _c, _c1, _count);
+
+    //cairo_scale(cr, 10, 10);
+
+    cairo_translate(cr, 500, 500);
+
+    cairo_set_source_rgb(cr, 0,0,0);
     cairo_set_line_width(cr, 1.0);
 
-    cairo_move_to(cr, 400, 400);
-    cairo_line_to(cr, 800, 800);
+    cairo_move_to(cr, -500, (-1)*_c);
+    cairo_line_to(cr, 500, (-1)*_c);
+
+    cairo_move_to(cr, -500, (-1)*_c1);
+    cairo_line_to(cr, 500, (-1)*_c1);
+
+    if(1000.0 / _begin_x < 10){
+
+        
+    }
+
+    cairo_move_to(cr, 10*_begin_x, 10*_begin_y*(-1));
+    for(int i = 0; i<_count-1; i++){
+
+        cairo_line_to(cr, drops[i].x, drops[i].y*(-1));
+    }
+    cairo_line_to(cr, _end_x, _end_y*(-1));
+
 
     cairo_stroke(cr);
+
+    free(drops);    
 }
