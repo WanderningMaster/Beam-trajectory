@@ -9,6 +9,8 @@ GtkWidget *window, /*main window*/
 
 
 void on_submit_clicked(GtkWidget *widget, gpointer data);
+void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
+
 
 int main(int argc, char **argv){
 
@@ -81,8 +83,12 @@ int main(int argc, char **argv){
 }
 
 void on_submit_clicked(GtkWidget *widget, gpointer data){
+
     drawing_area = gtk_drawing_area_new ();
-    results = gtk_label_new("");
+    results = gtk_label_new("Result example");
+
+
+    /*dialog configuration*/
     dialog = gtk_message_dialog_new
     (
                         GTK_WINDOW(window),
@@ -92,6 +98,50 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
                         NULL
     );
     gtk_window_set_title(GTK_WINDOW(dialog), "Trajectory");
+
+
+    /*connect content area with dialog*/
+    content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog)); 
+
+
+    /*pack drawing area and label into content area*/
+    gtk_container_add(GTK_CONTAINER(content_area), drawing_area);
+    gtk_container_add(GTK_CONTAINER(content_area), results);
+
+
+    /*drawing area configuration*/
+    gtk_widget_set_size_request (drawing_area, 800, 800);
+
+
+    //background color
+    GdkColor color;
+    gdk_color_parse ("white", &color);
+    gtk_widget_modify_bg ( GTK_WIDGET(drawing_area), GTK_STATE_NORMAL, &color);
+
+
+    /*When start drawing event*/
+    g_signal_connect(G_OBJECT(drawing_area), "draw", G_CALLBACK(on_draw_event), NULL); 
+
+
+    //showing our widgets
+    gtk_widget_show(drawing_area);
+    gtk_widget_show(results);
+
+
+    /*Run dialog*/
     gtk_dialog_run(GTK_DIALOG(dialog));
+
+    /*Destroy it on quit*/
     gtk_widget_destroy(dialog);
+}
+
+void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
+
+    cairo_set_source_rgb (cr, 255.0, 0.0, 0.0);
+    cairo_set_line_width(cr, 1.0);
+
+    cairo_move_to(cr, 400, 400);
+    cairo_line_to(cr, 800, 800);
+
+    cairo_stroke(cr);
 }
