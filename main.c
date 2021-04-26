@@ -7,7 +7,10 @@ GtkWidget *window, /*main window*/
       *v_label_box, *v_entry_box, *hbox,/*box widgets*/
       *button;/*submit button*/
 
-  int main(int argc, char **argv){
+
+void on_submit_clicked(GtkWidget *widget, gpointer data);
+
+int main(int argc, char **argv){
 
   gtk_init(&argc, &argv);
 
@@ -42,7 +45,7 @@ GtkWidget *window, /*main window*/
 
     /*form submission event*/
     button = gtk_button_new_with_label("Submit");
-    //g_signal_connect(button, "clicked", G_CALLBACK(button_clicked), NULL);
+    g_signal_connect(button, "clicked", G_CALLBACK(on_submit_clicked), NULL);
 
 
     /*packing labels into vertical box*/
@@ -75,4 +78,20 @@ GtkWidget *window, /*main window*/
 
     gtk_widget_show_all(window);
     gtk_main();
+}
+
+void on_submit_clicked(GtkWidget *widget, gpointer data){
+    drawing_area = gtk_drawing_area_new ();
+    results = gtk_label_new("");
+    dialog = gtk_message_dialog_new
+    (
+                        GTK_WINDOW(window),
+                        GTK_DIALOG_DESTROY_WITH_PARENT,
+                        GTK_MESSAGE_INFO,
+                        GTK_BUTTONS_OK,
+                        NULL
+    );
+    gtk_window_set_title(GTK_WINDOW(dialog), "Trajectory");
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
 }
