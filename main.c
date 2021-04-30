@@ -3,12 +3,12 @@
 #include <math.h>
 #include "Trajectory.h"
 #include <string.h>
-
+#include "Exep_handler.h"
 
 GtkWidget *window, /*main window*/
       *count, *c, *c1, //entries
       *count_label, *c_label, *c1_label, *results, *help,/*labels*/ 
-      *dialog, *content_area, *drawing_area,/*dialog widgets*/
+      *dialog, *content_area, *drawing_area, *exep_dialog,/*dialog widgets*/
       *v_label_box, *v_entry_box, *hbox,/*box widgets*/
       *button, *zoom;/*submit button*/
      
@@ -30,9 +30,9 @@ struct data{
 
 
 void on_submit_clicked(GtkWidget *widget, gpointer data);
-void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 void on_darea_click_event(GtkWidget *widget, GdkEventButton *event,gpointer user_data);
-void draw(cairo_t *cr, struct data my_data);
+static gboolean draw(cairo_t *cr, struct data my_data);
 
 int main(int argc, char **argv){
 
@@ -84,6 +84,7 @@ int main(int argc, char **argv){
 
     gtk_container_add(GTK_CONTAINER(window), hbox);
 
+
     gtk_widget_show_all(window);
     gtk_main();
 }
@@ -104,10 +105,10 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
                         NULL
     );
     gtk_window_set_title(GTK_WINDOW(dialog), "Trajectory");
+
     gtk_widget_add_events(GTK_WINDOW(drawing_area), GDK_BUTTON_PRESS_MASK);
     g_signal_connect(GTK_WINDOW(drawing_area), "button-press-event", 
       G_CALLBACK(on_darea_click_event), NULL);   
-
 
     /*connect content area with dialog*/
     content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog)); 
@@ -128,8 +129,6 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
     gdk_color_parse ("white", &color);
     gtk_widget_modify_bg ( GTK_WIDGET(drawing_area), GTK_STATE_NORMAL, &color);
 
-
-
     
     /*When start drawing event*/
     g_signal_connect(G_OBJECT(drawing_area), "draw", G_CALLBACK(on_draw_event), NULL); 
@@ -140,6 +139,7 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
     gtk_widget_show(results);
     gtk_widget_show(help);
 
+
     /*Run dialog*/
     gtk_dialog_run(GTK_DIALOG(dialog));
 
@@ -147,7 +147,7 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
     gtk_widget_destroy(dialog);
 }
 
-void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
     double _c = atof((char*)gtk_entry_get_text(GTK_ENTRY(c)));
     double _c1 = atof((char*)gtk_entry_get_text(GTK_ENTRY(c1)));
     double _begin_x = draw_point.coordx[0]-400;
@@ -158,7 +158,7 @@ void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
     double length; 
     double corner;
 
-   // printf("begin(%lf, %lf), end(%lf, %lf)\n", _begin_x, _begin_y, _end_x, _end_y);
+    printf("begin(%lf, %lf), end(%lf, %lf)\n", _begin_x, _begin_y, _end_x, _end_y);
     
     struct Point begin;
     begin.x = _begin_x;
@@ -167,31 +167,32 @@ void on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
     struct Point end;
     end.x = _end_x;
     end.y = _end_y;
-  
-    draw_point.count = 0;
 
     struct Point *drops;
     drops = (struct Point*)malloc(sizeof(struct Point)*(_count-1));
     get_drop_points(begin, end, drops, _c, _c1, _count);
 
     struct data my_data = {.begin = begin, .end = end, .drops = drops, .c = _c, .c1 = _c1, .count = _count};
-    gtk_label_set_text(results, "buf");
-    draw(cr, my_data);
+
+    gboolean handle = TRUE;
+    handle = draw(cr, my_data);
+    printf("Count: %d\n", draw_point.count);
+    if( !(handle == FALSE && draw_point.count == 0) ){
+        gtk_widget_show(results);
+    }
+
     char *buf;
     length = get_trajectory_length(begin, end, drops, _count);
     corner = get_corner(begin, end, drops, _count);
     asprintf(&buf, "Begin corner: %lf°, End corner %lf°, Length: %lf\nbegin(%lf, %lf), end(%lf, %lf)",corner, corner, 
                                                                                                     length, _begin_x, _begin_y, _end_x, _end_y);
-    gtk_label_set_text(results, buf); 
-    
-    for(int i = 0; i<2;i++){
-        draw_point.coordx[i] = 0;
-        draw_point.coordy[i] = 0;
-    }
+    gtk_label_set_text(results, buf);   
     free(drops);
+    draw_point.count = 0; 
+    return FALSE;
 }
 
-void draw(cairo_t *cr, struct data my_data){
+static gboolean draw(cairo_t *cr, struct data my_data){
 
     double _begin_x = my_data.begin.x;
     double _begin_y = my_data.begin.y;
@@ -213,6 +214,31 @@ void draw(cairo_t *cr, struct data my_data){
     cairo_move_to(cr, -400, (-1)*_c1);
     cairo_line_to(cr, 400, (-1)*_c1);
 
+
+      /*exception dialog configuration*/
+    exep_dialog = gtk_message_dialog_new 
+    (
+                                  GTK_WINDOW(dialog),
+                                  GTK_DIALOG_DESTROY_WITH_PARENT,
+                                  GTK_MESSAGE_ERROR,
+                                  GTK_BUTTONS_CLOSE,
+                                  "Imposible to calculate trajectory",
+                                  NULL
+    );
+
+
+    if(handle(_begin_y, _end_y, _c, _c1)){
+        if(draw_point.count == 2){
+            gtk_dialog_run(GTK_DIALOG(exep_dialog));
+            gtk_widget_destroy(exep_dialog);
+        }
+
+        printf("Imposible to calculate trajectory\n");
+        gtk_widget_hide(results);
+        cairo_stroke(cr);
+        return FALSE;
+    }
+
     cairo_move_to(cr, _begin_x, _begin_y*(-1));
     for(int i = 0; i<_count-1; i++){
 
@@ -220,9 +246,8 @@ void draw(cairo_t *cr, struct data my_data){
     }
     cairo_line_to(cr, _end_x, _end_y*(-1));
 
-
     cairo_stroke(cr);
-       
+    return TRUE;
 }  
 
 
