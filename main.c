@@ -120,8 +120,6 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
     gtk_container_add(GTK_CONTAINER(content_area), help);
 
     /*drawing area configuration*/
-    double _c = atof((char*)gtk_entry_get_text(GTK_ENTRY(c)));
-    double _c1 = atof((char*)gtk_entry_get_text(GTK_ENTRY(c1)));
     gtk_widget_set_size_request (drawing_area, 800, 800);
 
     //background color
@@ -145,6 +143,7 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
 
     /*Destroy it on quit*/
     gtk_widget_destroy(dialog);
+    draw_point.count = 0; 
 }
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
@@ -158,7 +157,7 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data
     double length; 
     double corner;
 
-    printf("begin(%lf, %lf), end(%lf, %lf)\n", _begin_x, _begin_y, _end_x, _end_y);
+    //printf("begin(%lf, %lf), end(%lf, %lf)\n", _begin_x, _begin_y, _end_x, _end_y);
     
     struct Point begin;
     begin.x = _begin_x;
@@ -179,16 +178,27 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data
     printf("Count: %d\n", draw_point.count);
     if( !(handle == FALSE && draw_point.count == 0) ){
         gtk_widget_show(results);
+        
     }
 
-    char *buf;
-    length = get_trajectory_length(begin, end, drops, _count);
-    corner = get_corner(begin, end, drops, _count);
-    asprintf(&buf, "Begin corner: %lf°, End corner %lf°, Length: %lf\nbegin(%lf, %lf), end(%lf, %lf)",corner, corner, 
-                                                                                                    length, _begin_x, _begin_y, _end_x, _end_y);
-    gtk_label_set_text(results, buf);   
+    char *buf = "";
+    if(draw_point.count != 0){
+
+        corner = get_corner(begin, end, drops, _count);
+        length = get_trajectory_length(begin, end, drops, _count);
+        asprintf(&buf, "Begin corner: %lf°, End corner %lf°, Length: %lf\nbegin(%lf, %lf), end(%lf, %lf)",corner, corner, 
+                                                                                                        length, _begin_x, _begin_y, _end_x, _end_y);
+        gtk_label_set_text(results, buf);  
+    }
+
     free(drops);
     draw_point.count = 0; 
+    /*for(int i = 0; i<2;i++){
+        draw_point.coordx[i] = 0;
+        draw_point.coordy[i] = 0;
+        
+    }*/
+
     return FALSE;
 }
 
@@ -215,7 +225,7 @@ static gboolean draw(cairo_t *cr, struct data my_data){
     cairo_line_to(cr, 400, (-1)*_c1);
 
 
-      /*exception dialog configuration*/
+    /*exception dialog configuration*/
     exep_dialog = gtk_message_dialog_new 
     (
                                   GTK_WINDOW(dialog),

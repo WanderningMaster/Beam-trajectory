@@ -82,11 +82,22 @@ double get_trajectory_length(struct Point begin, struct Point end, struct Point 
 }
 
 double get_corner(struct Point begin, struct Point end, struct Point *drops, int count){
+    printf("begin(%lf, %lf), end(%lf, %lf)\n", begin.x, begin.y, end.x, end.y);
     double corner;
-    corner = atan( ( begin.y - drops[0].y ) / ( abs(drops[0].x - begin.x) ) ); 
-    
+    if(count == 1){
+
+        printf("Hello there\n");
+        corner = atan( fabs(begin.y - end.y) /  fabs(begin.x - end.x) );
+    }
+    else{
+
+        corner = atan( ( begin.y - drops[0].y ) / ( fabs(drops[0].x - begin.x) ) ); 
+    }
+    printf("Corner: %lf\n", corner);
     /*converting from radians to degrees*/ 
     corner = (corner * 180) / PI;
+
+    
 
     return corner;
 }
