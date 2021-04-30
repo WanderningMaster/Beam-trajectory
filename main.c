@@ -114,14 +114,17 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
     /*connect content area with dialog*/
     content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog)); 
 
+    gtk_widget_set_margin_bottom (content_area, 0);
+    gtk_widget_set_margin_top (content_area, 0);
 
     /*pack drawing area and label into content area*/
+    gtk_container_add(GTK_CONTAINER(content_area), help);
     gtk_container_add(GTK_CONTAINER(content_area), drawing_area);
     gtk_container_add(GTK_CONTAINER(content_area), results);
-    gtk_container_add(GTK_CONTAINER(content_area), help);
+    
 
     /*drawing area configuration*/
-    gtk_widget_set_size_request (drawing_area, 800, 800);
+    gtk_widget_set_size_request (drawing_area, 600, 600);
 
     //background color
     GdkColor color;
@@ -144,16 +147,15 @@ void on_submit_clicked(GtkWidget *widget, gpointer data){
 
     /*Destroy it on quit*/
     gtk_widget_destroy(dialog);
-    draw_point.count = 0; 
 }
 
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data){
     double _c = atof((char*)gtk_entry_get_text(GTK_ENTRY(c)));
     double _c1 = atof((char*)gtk_entry_get_text(GTK_ENTRY(c1)));
-    double _begin_x = draw_point.coordx[0]-400;
-    double _begin_y = 400-draw_point.coordy[0];
-    double _end_x = draw_point.coordx[1]-400;
-    double _end_y = 400-draw_point.coordy[1];
+    double _begin_x = draw_point.coordx[0]-300;
+    double _begin_y = 300-draw_point.coordy[0];
+    double _end_x = draw_point.coordx[1]-300;
+    double _end_y = 300-draw_point.coordy[1];
     int _count = atoi((char*)gtk_entry_get_text(GTK_ENTRY(count)));
     double length; 
     double corner;
@@ -194,12 +196,6 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data
 
     free(drops);
     draw_point.count = 0; 
-    /*for(int i = 0; i<2;i++){
-        draw_point.coordx[i] = 0;
-        draw_point.coordy[i] = 0;
-        
-    }*/
-
     return FALSE;
 }
 
@@ -214,16 +210,16 @@ static gboolean draw(cairo_t *cr, struct data my_data){
     double _c1 = my_data.c1;
     int _count = my_data.count;   
 
-    cairo_translate(cr, 400, 400);
+    cairo_translate(cr, 300, 300);
 
     cairo_set_source_rgb(cr, 0,0,0);
     cairo_set_line_width(cr, 1.0);
 
-    cairo_move_to(cr, -400, (-1)*_c);
-    cairo_line_to(cr, 400, (-1)*_c);
+    cairo_move_to(cr, -300, (-1)*_c);
+    cairo_line_to(cr, 300, (-1)*_c);
 
-    cairo_move_to(cr, -400, (-1)*_c1);
-    cairo_line_to(cr, 400, (-1)*_c1);
+    cairo_move_to(cr, -300, (-1)*_c1);
+    cairo_line_to(cr, 300, (-1)*_c1);
 
 
     /*exception dialog configuration*/
