@@ -3,6 +3,7 @@
 #include <math.h>
 #include "Trajectory.h"
 #include <string.h>
+#include <stdio.h>
 #include "Exep_handler.h"
 
 GtkWidget *window, /*main window*/
@@ -181,14 +182,14 @@ static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data
         
     }
 
-    char *buf = "";
+    char str[100];
     if(draw_point.count != 0){
 
         corner = get_corner(begin, end, drops, _count);
         length = get_trajectory_length(begin, end, drops, _count);
-        asprintf(&buf, "Begin corner: %lf°, End corner %lf°, Length: %lf\nbegin(%lf, %lf), end(%lf, %lf)",corner, corner, 
-                                                                                                        length, _begin_x, _begin_y, _end_x, _end_y);
-        gtk_label_set_text(results, buf);  
+
+        sprintf(str, "Corner %lf, Length: %lf\nbegin(%lf, %lf), end(%lf, %lf)", corner, length, _begin_x, _begin_y, _end_x, _end_y);
+        gtk_label_set_text(results, str);  
     }
 
     free(drops);
